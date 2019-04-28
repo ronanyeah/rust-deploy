@@ -7,6 +7,8 @@ edition = "2018"
 [dependencies]
 http = "*"
 reqwest = "*"
+juniper = "*"
+serde_json = "*"
 
 [[bin]]
 name = "index"
