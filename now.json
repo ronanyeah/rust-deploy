@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "rust-deploy",
+  "builds": [
+    {
+      "src": "index.rs",
+      "use": "@now/rust"
+    }
+  ]
+}
