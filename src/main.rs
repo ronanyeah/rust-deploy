@@ -1,7 +1,9 @@
 use http::{Request, Response, StatusCode};
 use juniper::{graphql_object, graphql_value, FieldError, FieldResult, RootNode, Variables};
+use now_lambda::lambda;
 use reqwest;
 use serde_json;
+use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Query;
@@ -46,4 +48,8 @@ fn handler(_: Request<()>) -> http::Result<Response<String>> {
         .expect("failed to render response");
 
     return Ok(response);
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    Ok(lambda!(handler))
 }
