@@ -1,5 +1,5 @@
 use http::{Request, Response, StatusCode};
-use juniper::{graphql_object, graphql_value, FieldError, FieldResult, RootNode, Variables};
+use juniper::{graphql_value, FieldError, FieldResult, RootNode, Variables};
 use now_lambda::lambda;
 use reqwest;
 use serde_json;
@@ -8,28 +8,33 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Query;
 
-graphql_object!(Query: () |&self| {
-    field time() -> FieldResult<i32> {
-        return SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|t| t.as_secs() as i32)
-            .map_err(|_| FieldError::new("yeh", graphql_value!({ "internal_error": "oops" })));
-    }
-});
-
 pub struct Mutation;
 
-graphql_object!(Mutation: () |&self| {
-    field send() -> FieldResult<i32> {
-        return Ok(123 as i32);
-    }
-});
+type Context = ();
 
-fn handler(_: Request<()>) -> http::Result<Response<String>> {
+#[juniper::object(Context = Context)]
+impl Query {
+    fn time() -> FieldResult<i32> {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|t| t.as_secs() as i32)
+            .map_err(|_| FieldError::new("yeh", graphql_value!({ "internal_error": "oops" })))
+    }
+}
+
+#[juniper::object(Context = Context)]
+impl Mutation {
+    fn echo(txt: String) -> FieldResult<String> {
+        Ok(txt)
+    }
+}
+
+fn handler(req: Request<String>) -> http::Result<Response<String>> {
     let ctx = ();
+    let body = req.body();
 
     let (res, _errors) = juniper::execute(
-        "query { time }",
+        body,
         None,
         &RootNode::new(Query, Mutation),
         &Variables::new(),
@@ -47,7 +52,7 @@ fn handler(_: Request<()>) -> http::Result<Response<String>> {
         .body(content_str)
         .expect("failed to render response");
 
-    return Ok(response);
+    Ok(response)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
